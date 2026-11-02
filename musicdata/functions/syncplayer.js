@@ -7,8 +7,9 @@ const { MessageEmbed } = require('discord.js');
 require('dotenv').config();
 
 const defaultBannerMessage = `
-**플레이어 사용법**
-이 채널에 채팅으로 노래제목/링크/플레이리스트 링크를 치면 노래가 재생됩니다.
+**플레이어 사용법이다냐**
+이 채널에 채팅으로 노래제목/링크/플레이리스트 링크를 치면 노래가 나온다냐.
+고마우면 담배 달라냐.
 
 **기본 기능**
 ⏯️ : 노래 일시정지 | 다시재생
@@ -279,6 +280,7 @@ async function syncPlayerChannel(guildId){
 				if(server.queue.length > 2) server.queue.splice(1, 0, server.queue.pop());
 				break;
 		}
+		server.queueChanged();
 		i.update({
 			content: getPlayerEmbed(server).content,
 			embeds: getPlayerEmbed(server).embeds

@@ -1,5 +1,6 @@
 const serverInfoList = new Map();
 const { AudioPlayerStatus } = require('@discordjs/voice');
+const { refreshPrefetch } = require('../functions/prefetch.js');
 require('dotenv').config();
 
 class serverInfo {
@@ -14,12 +15,18 @@ class serverInfo {
 			connection: null, //assigned by joinVoiceChannel or getVoiceStatus Function.
 			audioPlayer: null, //assigned by createAudioPlayer();
 			audioResource: null, //assigned by createAudioResource();
+			prefetch: null,
+			sourceController: null,
+			playbackGeneration: 0,
+			requestGeneration: 0,
+			pendingRequests: 0,
+			temporaryConnection: false,
 		};
 		this.playInfo = {
 			//나중에 script.json에 저장
-			playStatus: ['⏹ 재생 중이 아님', '▶️ 지금 재생 중', '*️⃣ 버퍼링 중..', '⏸️ 일시정지됨', '⚠️ 오류 발생'],
+			playStatus: ['⏹ 재생 중이 아니다냐', '▶️ 지금 재생 중이다냐', '*️⃣ 버퍼링 중이다냐...', '⏸️ 일시정지됬다냐', '⚠️ 오류 발생이다냐'],
 			playStatusCode: 0, //max 4
-			loopmode: ['➡️ 기본 재생 모드', '🔂 반복 재생 모드', '🔁 대기열 반복 모드', '♾️ 자동 재생 모드'],
+			loopmode: ['➡️ 기본 재생 모드다냐', '🔂 반복 재생 모드다냐', '🔁 대기열 반복 모드다냐', '♾️ 자동 재생 모드다냐'],
 			loopcode: 0, //max 3
 			volume: 0.3,
 			searchFilter: {
@@ -49,11 +56,29 @@ class serverInfo {
 		};
 	}
 
-	enterstop(){
+	cancelPreparation({ cancelRequests = true } = {}) {
+		this.streamInfo.playbackGeneration++;
+		if (cancelRequests) this.streamInfo.requestGeneration++;
+		this.streamInfo.prefetch?.cancel();
+		this.streamInfo.sourceController?.abort();
+	}
+
+	queueChanged() { refreshPrefetch(this); }
+
+	enterstop(options){
+		this.cancelPreparation(options);
+		const player = this.streamInfo.audioPlayer;
+		const resource = this.streamInfo.audioResource;
+		// Detach before stopping: an already-idle player emits no new Idle event.
+		this.streamInfo.audioPlayer = null;
+		this.streamInfo.advanceTrack = null;
+		this.streamInfo.sourceController = null;
 		this.playInfo.playStatusCode = 0;
 		this.playInfo.loopcode = 0;
 		this.streamInfo.audioResource = null;
 		this.queue = [];
+		player?.stop(true);
+		resource?.playStream?.destroy();
 	}
 }
 
@@ -65,28 +90,32 @@ class musicFunctions extends serverInfo {
 	//default funcitons. (dont need arguments.)
 	//np, viewqueue는 command만 가능함. 여따 안넣고 defaultMusicCommands에다 넣기 ㄱ
 	pause() {
-		return this.streamInfo.audioPlayer.state.status == 'paused' ? 
+		const result = this.streamInfo.audioPlayer.state.status == 'paused' ?
 			this.streamInfo.audioPlayer.unpause() :
 			this.streamInfo.audioPlayer.pause(true);
+		this.queueChanged();
+		return result;
 	}
 
 	async stop() {
-		this.queue = [];
-		await this.streamInfo.audioPlayer?.stop(true); //force-stop.
-		await super.enterstop();
+		super.enterstop();
 		return true;
 	}
 
 	skip() {
-		this.streamInfo.audioPlayer.stop(true);
+		if (this.streamInfo.sourceController) {
+			this.streamInfo.playbackGeneration++;
+			this.streamInfo.sourceController.abort();
+			return this.streamInfo.advanceTrack?.();
+		}
+		this.streamInfo.audioPlayer?.stop(true);
 	}
 
 
 	async eject() {
-		this.queue = [];
-		await this.streamInfo.connection.destroy();
-		if(this.streamInfo.audioPlayer) await this.streamInfo.audioPlayer.stop(true); //force-stop.
-		await super.enterstop(); //refresh streamInfo.
+		super.enterstop();
+		this.streamInfo.connection?.destroy();
+		this.streamInfo.connection = null;
 	}
 
 	//advanced functions, but dont require arguments.
@@ -101,6 +130,7 @@ class musicFunctions extends serverInfo {
 				this.queue[j], this.queue[i]
 			];
 		}
+		this.queueChanged();
 		return true;
 	}
 
@@ -113,10 +143,11 @@ class musicFunctions extends serverInfo {
 
 	jump(goto){
 		if(goto >= this.queue.length) return false;
+		this.streamInfo.prefetch?.cancel();
 		this.playInfo.loopcode == 2 ? 
 			this.queue = this.queue.concat(this.queue.splice(0, goto-1)) :
 			this.queue.splice(0, goto-1);
-		this.streamInfo.audioPlayer.stop();
+		this.skip();
 		return true;
 	}
 
@@ -133,6 +164,7 @@ class musicFunctions extends serverInfo {
 		!range2 ? 
 			this.queue.splice(range1, 1) :
 			this.queue.splice(range1, range2 - range1 + 1);
+		this.queueChanged();
 		return range1 == 1 && range2 == this.queue.length-1 ? 'rmclear1' 
 			: !range2 ? 'rmclear0'
 			: 'rmclear2';
@@ -146,12 +178,15 @@ class musicFunctions extends serverInfo {
 
 		function movearray(list, target, moveValue){
 			const newpos = Number(target) + Number(moveValue);
-			const tempList = JSON.parse(JSON.stringify(list));
+			// Queue entries also identify in-flight and prepared audio ownership.
+			// Reordering must not replace every track with a cloned object.
+			const tempList = list.slice();
 			const totarget = tempList.splice(target, 1)[0];
 			tempList.splice(newpos, 0, totarget);
 			return tempList;
 		}
 		this.queue = movearray(this.queue, range1, range2 - range1);
+		this.queueChanged();
 		return true;
 	}
 

@@ -9,13 +9,13 @@ const scurlReg = /^https?:\/\/(soundcloud\.com|snd\.sc)\/(.*)$/;
 
 function getPlayerEmbed(server){
 
-	let queuelist = '<여기에 대기 중인 노래 표시됨>';
+	let queuelist = '<여기에 대기 중인 노래가 표시된다냐>';
 	if(server.queue.length > 1){
 		queuelist = '';
 		for(let i = server.queue.length - 1; i > 0; i--){
 			if(i > 19){
 				i = 19;
-				queuelist = `...이외에 ${Number(server.queue.length) - 20}곡 대기 중\n`;
+				queuelist = `...이외에 ${Number(server.queue.length) - 20}곡 대기 중이다냐\n`;
 			}
 			queuelist += `#${i}.` + 
 				'`' +`[${server.queue[i].duration}]` + '`' + 

@@ -121,6 +121,7 @@ async function loopMessage(interaction, server){
 				break;
 		}
 
+		server.queueChanged();
 		collector.stop();
 		await interaction.deleteReply();
 		server.playInfo.loopcode == 0 ?
