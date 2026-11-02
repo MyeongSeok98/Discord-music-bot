@@ -23,7 +23,7 @@ module.exports = {
 						id: '',
 						messageContent: 'default',
 						message: null,
-						imageURL: ['./imgs/playerbanner.jpg'],
+						imageURL: ['./imgs/playerbanner.png'],
 					},
 					embed: {
 						id: '',

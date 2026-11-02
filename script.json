@@ -1,0 +1,65 @@
+{
+  "defaultMusicCommandScript": {
+    "nothingPlay": "현재 재생 중인 음악이 없습니다.",
+    "existOtherVc": "봇과 같은 음성 채널에 들어와 주세요.",
+    "firstJoinVc": "먼저 음성 채널에 들어와 주세요.",
+    "ejectmsg": "재생을 종료하고 음성 채널에서 나갔습니다.",
+    "pausemsg": "음악을 일시정지했습니다.",
+    "playmsg": "음악 재생을 다시 시작했습니다.",
+    "skipmsg": "현재 곡을 건너뛰었습니다.",
+    "stopmsg": "재생을 중지하고 대기열을 비웠습니다.",
+    "norecentsong": "최근 재생한 곡이 없습니다.",
+    "shufmsg": "대기열을 섞었습니다.",
+    "shuferr": "대기열을 섞을 수 없습니다. 대기 중인 곡 수를 확인해 주세요.",
+    "jumped": "대기열 ${goto}번 곡으로 이동했습니다.",
+    "jumpRangeWarn": "이동할 곡의 번호를 확인해 주세요.",
+    "moveWarn1": "순서를 변경하려면 대기 중인 곡이 두 곡 이상 필요합니다.",
+    "moveWarn2": "이동할 곡의 번호가 대기열 범위를 벗어났습니다.",
+    "moveWarn3": "도착 위치가 대기열 범위를 벗어났습니다.",
+    "moveWarn4": "현재 위치와 도착 위치가 같습니다.",
+    "moved": "${target}번 곡 ${title}을 ${locate}번으로 이동했습니다.",
+    "rmWarn1": "삭제할 대기 곡이 없습니다.",
+    "rmWarn2": "현재 재생 중인 곡은 삭제할 수 없습니다. 건너뛰기를 사용해 주세요.",
+    "rmclear0": "대기열 ${target}번 곡 ${title}을 삭제했습니다.",
+    "rmclear1": "대기 중인 곡을 모두 삭제했습니다.",
+    "rmclear2": "대기열 ${target}번부터 ${endpt}번까지 삭제했습니다.",
+    "volset": "음량을 ${size}로 설정했습니다.",
+    "volRangeWarn": "명령어에서 허용하는 음량 범위 안의 값을 입력해 주세요.",
+    "loopwarn": "반복 모드를 변경할 수 없습니다. 재생 상태를 확인해 주세요.",
+    "loopsingledes": "현재 곡을 반복해서 재생합니다.",
+    "loopqueuedes": "대기열 전체를 반복해서 재생합니다.",
+    "loopautodes": "관련 곡을 자동으로 찾아 이어서 재생합니다.",
+    "loopoffdes": "반복을 끄면 대기열 순서대로 재생합니다.",
+    "loopoffmsg": "반복 재생을 껐습니다.",
+    "loopchmsg": "재생 모드를 ${playmode}로 변경했습니다."
+  },
+  "searchsongScript": {
+    "addedfromPlaylist": "플레이리스트에서 ${found}곡을 대기열에 추가했습니다.",
+    "enqueue": "곡을 대기열 ${locate}번에 추가했습니다."
+  },
+  "streamScript": {
+    "firstJoinVc": "먼저 음성 채널에 들어와 주세요.",
+    "alreadyStreaming": "현재 ${vc}에서 재생 중입니다. 같은 음성 채널에 들어와 주세요.",
+    "errormsg": [
+      "곡을 처리하지 못했습니다. 입력 내용을 확인해 주세요.",
+      "YouTube 플레이리스트를 불러오지 못했습니다.",
+      "YouTube 영상 정보를 불러오지 못했습니다.",
+      "SoundCloud 플레이리스트를 불러오지 못했습니다.",
+      "SoundCloud 곡 정보를 불러오지 못했습니다.",
+      "검색 결과가 없습니다.",
+      "곡 검색 중 오류가 발생했습니다.",
+      "음악 처리 중 오류가 발생했습니다."
+    ]
+  },
+  "settingScript": {
+    "permissionDenied": "이 설정을 변경할 권한이 없습니다.",
+    "playercmdDenied": "플레이어 채널에서는 이 설정 명령을 사용할 수 없습니다."
+  },
+  "syncplayerScript": {
+    "emptyPlayerTitle": "현재 재생 중인 음악이 없습니다.",
+    "emptyPlayerDescription": "음성 채널에 들어간 뒤 /play 명령으로 곡을 추가해 주세요."
+  },
+  "playerLeftScript": {
+    "left": "음성 채널에 청취자가 없어 재생을 종료했습니다."
+  }
+}

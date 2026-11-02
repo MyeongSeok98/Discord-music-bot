@@ -18,9 +18,9 @@ global.AbortController = require('node-abort-controller').AbortController;
 const { streamScript } = require('../../script.json');
 const { pushqueue } = require('./pushqueue.js');
 const { getPlayerEmbed } = require('./updateplayer.js');
+const { waitForVoiceReady } = require('./voiceconnection.js');
 
-const playdl = require('play-dl');
-const ytdl = require('ytdl-core');
+const youtube = require('./youtube.js');
 const scdl = require('soundcloud-downloader').default;
 const yturlReg = /^https?:\/\/(www.youtube.com|youtube.com|youtu.be)\/(.*)$/;
 const scurlReg = /^https?:\/\/(soundcloud\.com|snd\.sc)\/(.*)$/;
@@ -35,29 +35,46 @@ async function streamTrigger(interaction, text, requestType){
 			interaction.channel.send(`${interaction.member.user}, ` + streamScript.firstJoinVc);
 
 	//user and bot joined voice channel, but that channels are different.
-	if(interaction.guild.me.voice.channel
-		&& (interaction.member.voice.channel.id != interaction.guild.me.voice.channel.id))
+	if(interaction.guild.members.me.voice.channel
+		&& (interaction.member.voice.channel.id != interaction.guild.members.me.voice.channel.id))
 		return (interaction instanceof Interaction && interaction.isCommand()) ? 
 			interaction.editReply({
 				content: streamScript.alreadyStreaming.interpolate({
-					vc: `${interaction.guild.me.voice.channel}`
+					vc: `${interaction.guild.members.me.voice.channel}`
 				}), ephemeral: true
 			}) :
 			interaction.channel.send({
 				content: `${interaction.member.user}, ` + streamScript.alreadyStreaming.interpolate({
-					vc: `${interaction.guild.me.voice.channel}`
+					vc: `${interaction.guild.members.me.voice.channel}`
 				})
 			});
 
 	const server = serverInfoList.get(interaction.guild.id);
 
 	//bot is not joined voice channel, but user send a request => bot joins voicechannel.
-	if(!server.streamInfo.connection || !server.guild.me.voice.channel){
+	if(!server.streamInfo.connection || server.streamInfo.connection.state.status === VoiceConnectionStatus.Destroyed || !server.guild.members.me.voice.channel){
 		server.streamInfo.connection = await joinVoiceChannel({
 			channelId: interaction.member.voice.channel.id,
 			guildId: interaction.guild.id,
-			adapterCreator: interaction.guild.voiceAdapterCreator
+			adapterCreator: interaction.guild.voiceAdapterCreator,
+			selfDeaf: true,
+			selfMute: false
 		});
+		server.streamInfo.connection.on('stateChange', (oldState, newState) => {
+			console.log(`[voice ${server.guild.id}] ${oldState.status} -> ${newState.status}`);
+		});
+		server.streamInfo.connection.on('error', error => {
+			console.error(`[voice ${server.guild.id}]`, error);
+		});
+	}
+	try {
+		await waitForVoiceReady(server.streamInfo.connection);
+	} catch (error) {
+		console.error(`[voice ${server.guild.id}]`, error);
+		server.streamInfo.connection = null;
+		if (interaction.isCommand?.()) await interaction.editReply(error.message);
+		else await interaction.channel.send(error.message);
+		return;
 	}
 	
 	server.streamInfo.currentCommandChannel = '<#' + interaction.channel.id + '>';
@@ -68,15 +85,15 @@ async function streamTrigger(interaction, text, requestType){
 	switch(requestType){
 		case 'command':
 		case 'player':
-			await pushqueue(interaction, text).then(rm => {
+			await pushqueue(interaction, text).then(async rm => {
 				if(typeof(rm) === 'number') return sendErrorMsg(interaction, rm);
 
-				if(server.queue.length == 1) rm.content = '재생 시작!';
+				if(server.queue.length == 1) rm.content = '곡을 추가했습니다. 오디오를 준비하고 있습니다.';
 
 				if(requestType == 'command') interaction.editReply(rm);
 
 				if(!server.streamInfo.audioPlayer && server.queue.length > 0)
-					startStream(interaction, server);
+					await startStream(interaction, server);
 
 				server.playerInfo.playermsg.embed.message?.edit({
 					content: getPlayerEmbed(server).content,
@@ -101,23 +118,18 @@ async function startStream(interaction, server){
 	const audioPlayer = createAudioPlayer();
 	server.streamInfo.audioPlayer = audioPlayer;
 
-	await getSongStream(interaction, server);
+	audioPlayer.on('stateChange', (oldState, newState) => {
+		console.log(`[audio ${server.guild.id}] ${oldState.status} -> ${newState.status}`);
+	});
 	
 	//status handler
 	audioPlayer.on(AudioPlayerStatus.Playing, async () => {
 		server.playInfo.playStatusCode = 1;
 
-		if(server.queue.length > 0){
-			if(!server.queue[0].author.thumbnail){
-				const info = await ytdl.getInfo(server.queue[0].url, {
-					requestOptions: {
-						headers: {
-							cookie: process.env.YOUTUBE_COOKIE,
-						}
-					}
-				});
-				server.queue[0].author.thumbnail = info.videoDetails.author.thumbnails[0].url;
-			}
+		// Playlist tracks may not carry a channel avatar. Do not re-query the
+		// broken legacy extractor after playback has already started.
+		if (server.queue[0] && !server.queue[0].author.thumbnail) {
+			server.queue[0].author.thumbnail = 'https://cdn-icons-png.flaticon.com/512/145/145809.png';
 		}
 				
 		//refresh player embed.
@@ -157,10 +169,15 @@ async function startStream(interaction, server){
 		if(server.previousqueue.length > 7) server.previousqueue.pop();
 
 		if(server.queue.length > 0) {
-			await getSongStream(interaction, server); //다음곡 존재하면 새로 틀기
-			server.playInfo.playStatusCode = 1;
-			if(server.playInfo.loopcode != 1 && !server.playerInfo.setupped)
-				server.playInfo.recentChannel.send(`지금 재생 중 : **${server.queue[0].title}**`);
+			if (await getSongStream(interaction, server)) {
+				if(server.playInfo.loopcode != 1 && !server.playerInfo.setupped)
+					server.playInfo.recentChannel.send(`지금 재생 중 : **${server.queue[0].title}**`);
+			} else {
+				errorhandling = 1;
+				audioPlayer.stop(true);
+				server.streamInfo.audioPlayer = null;
+				server.streamInfo.audioResource = null;
+			}
 		}	
 
 		if(server.queue.length == 0) {
@@ -200,20 +217,28 @@ async function startStream(interaction, server){
 		server.playInfo.playStatusCode = 4;
 		errorhandling = 1;
 		console.log(e);
-		if(server.queue.length > 0) getSongStream(interaction, server);
+		// Do not loop forever on a failed decoder or source. A new request can retry.
+		server.streamInfo.audioPlayer = null;
 		
 		server.playerInfo.playermsg.embed.message?.edit({
 			content: getPlayerEmbed(server).content,
 			embeds: getPlayerEmbed(server).embeds
 		})
 	});
+	if (!await getSongStream(interaction, server)) {
+		errorhandling = 1;
+		audioPlayer.stop(true);
+		server.streamInfo.audioPlayer = null;
+		server.streamInfo.audioResource = null;
+	}
 }
 
-//play-dl function.
+// Stream YouTube audio through yt-dlp; keep SoundCloud's existing path.
 async function getSongStream(interaction, server){
+	let streamSong;
 	try{
-		let streamSong = yturlReg.test(server.queue[0].url) ?
-			await playdl.stream(server.queue[0].url) : 
+		streamSong = yturlReg.test(server.queue[0].url) ?
+			await youtube.stream(server.queue[0].url) :
 			await scdl.download(server.queue[0].url);
 
 		server.streamInfo.audioResource = yturlReg.test(server.queue[0].url) ? 
@@ -229,8 +254,11 @@ async function getSongStream(interaction, server){
 		await server.streamInfo.audioPlayer.play(server.streamInfo.audioResource);
 		await server.streamInfo.connection.subscribe(server.streamInfo.audioPlayer);
 		server.previousqueue.unshift(server.queue[0]);
+		return true;
 	}catch(error){
-		interaction.channel.send('스트리밍 중 오류가 발생했습니다.');
+		(streamSong?.stream || streamSong)?.destroy?.();
+		server.playInfo.playStatusCode = 4;
+		await interaction.channel.send('스트리밍 중 오류가 발생했습니다. 터미널 로그를 확인해 주세요.');
 		console.log(error);
 
 		if(error.message.includes('UnrecoverableError')) {
@@ -239,45 +267,11 @@ async function getSongStream(interaction, server){
 				interaction.editReply('이 링크는 사용할 수 없습니다. 스킵합니다..') :
 				server.playInfo.recentChannel.send('이 링크는 사용할 수 없습니다. 스킵합니다..');
 		}
+		return false;
 	}
 }
 
-/* ytdl version(has aborting issue)
-async function getSongStream(interaction, server){
-	let streamSong = yturlReg.test(server.queue[0].url) ?
-		await ytdl(server.queue[0].url, {
-			quality: 'highestaudio',
-			highWaterMark: 1024 * 1024 * 10,
-			requestOptions: {
-				headers: {
-					cookie: process.env.YOUTUBE_COOKIE,
-				}
-			}
-		}).on('error', (e) => {
-			console.log(`\nStreamingError at ${server.guild.name}@${server.guild.id}.`);
-			console.log(`User ${server.queue[0].request.tag} sent ${server.queue[0].title}(${server.queue[0].url})`);
-			console.log('-----------');
-			console.log(e);
-			console.log('-----------\n');
 
-			if(e.message.includes('UnrecoverableError')) {
-				server.queue.shift();
-				(interaction instanceof Interaction) ? 
-					interaction.editReply('이 링크는 사용할 수 없습니다. 스킵합니다..') :
-					interaction.channel.send('이 링크는 사용할 수 없습니다. 스킵합니다..');
-			}
-
-		}) : await scdl.download(server.queue[0].url);
-
-	server.streamInfo.audioResource = await createAudioResource(streamSong, {
-		inlineVolume: true
-	});
-	server.streamInfo.audioResource.volume.setVolume(server.playInfo.volume);
-
-	await server.streamInfo.audioPlayer.play(server.streamInfo.audioResource);
-	await server.streamInfo.connection.subscribe(server.streamInfo.audioPlayer);
-}
-*/
 
 const { ytsearchGetInfo, ytRelatedGetInfo } = require('./search.js');
 

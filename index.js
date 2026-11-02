@@ -1,4 +1,6 @@
-//developed by teddypicker
+// 봇 프로세스에서 사용할 DNS 지정
+require('node:dns').setServers(['8.8.8.8', '8.8.4.4']);
+
 process.chdir(__dirname);
 //0-1. pre-settings
 
@@ -281,6 +283,13 @@ client.once('ready', async () => {
 	}, 300e3);
 });
 
-mongoose.connect(`mongodb+srv://neoxenesis:${process.env.DBPASSWORD}@snowsantbottestcl.havf9.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`);
+const dbUser = encodeURIComponent(process.env.DBUSER);
+const dbPassword = encodeURIComponent(process.env.DBPASSWORD);
+const dbHost = process.env.DBHOST;
+const dbName = encodeURIComponent(process.env.DBNAME);
+
+mongoose.connect(
+  `mongodb+srv://${dbUser}:${dbPassword}@${dbHost}/${dbName}?retryWrites=true&w=majority`
+);
 client.login(process.env.DISCORD_TOKEN);
 

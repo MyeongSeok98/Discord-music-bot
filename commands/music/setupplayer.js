@@ -64,7 +64,7 @@ module.exports = {
 					playermsg: {
 						banner: {
 							messageContent: 'default',
-							imageURL: ['./imgs/playerbanner.jpg']
+							imageURL: ['./imgs/playerbanner.png']
 						},
 						embed: {
 							messageContent: 'default',

@@ -3,7 +3,7 @@ const { serverInfoList } = require('../../musicdata/structures/musicServerInfo.j
 const { MessageEmbed } = require('discord.js');
 const { getTimestamp } = require('../../musicdata/structures/timestamp.js');
 const ytReg = /^https:?\/\/(www.youtube.com|youtube.com|youtu.be)/;
-const ytdl = require('ytdl-core');
+const ytdl = require('../../musicdata/functions/youtube.js');
 const scdl = require('soundcloud-downloader').default;
 require('dotenv').config();
 const { defaultMusicCommandScript } = require('../../script.json');

@@ -1,4 +1,4 @@
-const ytdl = require('ytdl-core');
+const youtube = require('./youtube.js');
 const ytpl = require('ytpl');
 const ytsr = require('ytsr');
 const scdl = require('soundcloud-downloader').default;
@@ -31,13 +31,7 @@ async function ytplGetInfo(text){ //filter
 		}
 		
 		if(!plres.author){ //OL thumbnail generator.
-			const info = await ytdl.getInfo(plres.items[0].url, {
-				requestOptions : {
-					headers: {
-						cookie: process.env.YOUTUBE_COOKIE,
-					},
-				},
-			});
+			const info = await youtube.getInfo(plres.items[0].url);
 			playlistInfo.info.author = {
 				name: info.videoDetails.author.name,
 				thumbnail: info.videoDetails.author.thumbnails[0].url,
@@ -71,13 +65,7 @@ async function ytplGetInfo(text){ //filter
 
 async function yturlGetInfo(text){
 	try{
-		const ytres = await ytdl.getInfo(text, {
-			requestOptions: {
-				headers: {
-					cookie: process.env.YOUTUBE_COOKIE,
-				},
-			},
-		});
+		const ytres = await youtube.getInfo(text);
 
 		const durationTimestamp = await getTimestamp(Number(ytres.videoDetails.lengthSeconds));
 
@@ -248,13 +236,7 @@ async function ytplsearchGetInfo(text){
 		}
 		
 		if(!plres.author){ //OL thumbnail generator.
-			const info = await ytdl.getInfo(plres.items[0].url, {
-				requestOptions : {
-					headers: {
-						cookie: process.env.YOUTUBE_COOKIE,
-					},
-				},
-			});
+			const info = await youtube.getInfo(plres.items[0].url);
 			playlistInfo.info.author = {
 				name: info.videoDetails.author.name,
 				thumbnail: info.videoDetails.author.thumbnails[0].url,
@@ -286,68 +268,27 @@ async function ytplsearchGetInfo(text){
 	}
 }
 
-function youtube_parser(url){
-    var regExp = /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*/;
-    var match = url.match(regExp);
-    return (match&&match[1].length==11)? match[7] : false;
-}
-
 async function ytRelatedGetInfo(text, filter, previousqueue){
-	try{
-		const getInfo = await ytdl.getInfo(text, {
-			requestOptions: {
-				headers: {
-					cookie: process.env.YOUTUBE_COOKIE,
-				}
-			}
-		});
-		const relatedVideos = getInfo.related_videos; //type: []
-
-		let bankeywordCheck = 0;
-		let previousidCheck = 0;
-		let result = 5;
-
-		for(let i = 0; i < relatedVideos.length; i++){
-
-			filter.banKeywords.forEach(keyword => {
-				if(relatedVideos[i].title.toLowerCase().includes(keyword.toLowerCase())) bankeywordCheck = 1;
-			});
-
-
-			if(previousqueue.length > 0) previousqueue.forEach(q => {
-				if(q && relatedVideos[i].id == youtube_parser(q.url)) previousidCheck = 1;
-			})
-
-
-			if(filter.durationLimit != 0 &&
-				(filter.durationLimit < Number(relatedVideos[i].length_seconds) ||
-					bankeywordCheck == 1 || previousidCheck == 1)){
-				bankeywordCheck = 0;
-				previousidCheck = 0;
-				continue;
-			}else{
-				result = {
-					title: relatedVideos[i].title,
-					url: 'https://www.youtube.com/watch?v=' + relatedVideos[i].id,
-					duration: getTimestamp(relatedVideos[i].length_seconds),
-					thumbnail: `https://i.ytimg.com/vi/${relatedVideos[i].id}/hqdefault.jpg`,
-					author: {
-						name: relatedVideos[i].author.name,
-						thumbnail: relatedVideos[i].author.thumbnails[0].url ?? 'https://user-images.githubusercontent.com/110469/41812098-71d75190-7714-11e8-81e4-ac4cd3ad111f.png', 
-						channelURL: relatedVideos[i].author.channel_url,
-					}
-				}
-				break;
-			}
-		}
-		
-		return result;
-		
-	}catch(error){
-		console.log('youtube auto recommend search error. reason : ');
-		console.log(error);
-		return 6;
-	}
+    try {
+        const info = await youtube.getRelatedInfo(text, filter, previousqueue);
+        if (!info) return 5;
+        const video = info.videoDetails;
+        return {
+            title: video.title,
+            url: video.video_url,
+            duration: getTimestamp(Number(video.lengthSeconds)),
+            thumbnail: 'https://i.ytimg.com/vi/' + video.videoId + '/hqdefault.jpg',
+            author: {
+                name: video.author.name,
+                thumbnail: video.author.thumbnails[0].url,
+                channelURL: video.author.channel_url
+            }
+        };
+    } catch (error) {
+        console.log('youtube auto recommend search error. reason : ');
+        console.log(error);
+        return 6;
+    }
 }
 
 module.exports = {

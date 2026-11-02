@@ -4,7 +4,6 @@ const { MessageEmbed } = require('discord.js');
 const { getTimestamp } = require('../../musicdata/structures/timestamp.js');
 const { defaultMusicCommandScript } = require('../../script.json');
 const ytReg = /^https:?\/\/(www.youtube.com|youtube.com|youtu.be)/;
-const ytdl = require('ytdl-core');
 const scdl = require('soundcloud-downloader').default;
 require('dotenv').config();
 
