@@ -12,7 +12,7 @@ const { defaultMusicCommandScript } = require('../../script.json');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('q')
-		.setDescription('📜 현재 대기 중인 노래의 목록을 보여줘요'),
+		.setDescription('📜 현재 대기 중인 노래의 목록을 보여준다냐'),
 	async execute(interaction){
 		await interaction.deferReply();
 		

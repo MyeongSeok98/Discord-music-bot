@@ -5,7 +5,7 @@ const { defaultMusicCommandScript } = require('../../script.json');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('shuffle')
-		.setDescription('🔀 대기열의 노래를 섞어요'),
+		.setDescription('🔀 대기열의 노래를 섞는다냐'),
 	async execute(interaction){
 
 		await interaction.deferReply();

@@ -5,11 +5,11 @@ const { defaultMusicCommandScript } = require('../../script.json');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('volume')
-		.setDescription('🔉 스트리밍 할 때의 볼륨을 바꿔요. 모두에게 지정되는 값이에요')
+		.setDescription('🔉 스트리밍 할 때의 볼륨을 바꾼다냐. 모두에게 지정되는 값이다냐')
 		.addIntegerOption(option =>
 			option
 				.setName('volume')
-				.setDescription('볼륨을 몇%로 설정할건지 1~100까지의 자연수를 써 주세요')
+				.setDescription('볼륨을 몇%로 설정할건지 1~100까지의 자연수를 써 달라냐')
 				.setRequired(true)
 		),
 	async execute(interaction){

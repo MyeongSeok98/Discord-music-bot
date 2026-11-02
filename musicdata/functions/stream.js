@@ -24,7 +24,7 @@ const scurlReg = /^https?:\/\/(soundcloud\.com|snd\.sc)\/(.*)$/;
 
 require('dotenv').config();
 
-async function streamTrigger(interaction, text, requestType){
+async function streamTrigger(interaction, text, requestType, { allowMix = false } = {}){
     if (requestType !== 'command' && requestType !== 'player') return;
     const reply = message => requestType === 'command'
         ? interaction.editReply(message) : interaction.channel.send(message);
@@ -41,6 +41,13 @@ async function streamTrigger(interaction, text, requestType){
         return reply(streamScript.alreadyStreaming.interpolate({ vc: '<#' + existingChannel + '>' }));
     }
     const generation = state.requestGeneration;
+    let requestOptions;
+    const mix = youtube.parsePlaylistRequest(text);
+    if (mix?.isMix && !allowMix) {
+        text = `https://www.youtube.com/watch?v=${mix.videoId}`;
+    } else if (mix?.isMix) {
+        requestOptions = { mixCount: 10 };
+    }
     state.pendingRequests++;
     let committed = false;
     try {
@@ -70,7 +77,7 @@ async function streamTrigger(interaction, text, requestType){
             }
             await waitForVoiceReady(connection);
             return connection;
-        }, () => resolveRequest(interaction, text));
+        }, () => resolveRequest(interaction, text, requestOptions));
         if (generation !== state.requestGeneration) return reply('재생 준비 중 요청이 취소되었습니다.');
         if (typeof prepared.request === 'number' || !prepared.request) {
             return sendErrorMsg(interaction, prepared.request || 7);

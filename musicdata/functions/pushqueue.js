@@ -1,3 +1,4 @@
+const { parsePlaylistRequest } = require('./youtube.js');
 /* Default Song Info.
 
 song = {
@@ -42,18 +43,16 @@ const {
 } = require('discord.js');
 const { searchsongScript } = require('../../script.json');
 
-const ytplReg1 = /^https?:\/\/(www\.youtube\.com|youtube\.com|youtu\.be)\/playlist(.*)$/;
-const ytplReg2 = /^https?:\/\/(www\.youtube\.com|youtube\.com|youtu\.be).*(list=PL|list=OL)([^#\&\?]*)/;
 const yturlReg = /^https?:\/\/(www\.youtube\.com|youtube\.com|youtu\.be)\/(.*)$/;
 const scurlReg = /^https?:\/\/(soundcloud\.com|snd\.sc)\/(.*)$/;
 const scsetReg = /^https?:\/\/(soundcloud\.com|snd\.sc)\/(.*)\/(sets)\/(.*)$/;
 
 
 //pushqueue는 기본적으로 음악 정보 수집에 성공하면 MessageEmbed를 return함.
-async function resolveRequest(interaction, text){
+async function resolveRequest(interaction, text, options){
 	const server = serverInfoList.get(interaction.guild.id);
-	let res = (ytplReg1.test(text) || (ytplReg2.test(text) && !text.includes('index='))) ? 
-		await ytplGetInfo(text)
+	let res = parsePlaylistRequest(text) ?
+		await ytplGetInfo(text, options)
 		: scsetReg.test(text) ? await scsetGetInfo(text)
 		: yturlReg.test(text) ? await yturlGetInfo(text)
 		: scurlReg.test(text) ? await scurlGetInfo(text)

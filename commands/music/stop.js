@@ -5,7 +5,7 @@ const { defaultMusicCommandScript } = require('../../script.json');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('stop')
-		.setDescription('⏹ 현재 재생 중인 노래를 멈추고 음악 플레이어를 초기화해요'),
+		.setDescription('⏹ 현재 재생 중인 노래를 멈추고 음악 플레이어를 초기화한다냐'),
 	async execute(interaction){
 
 		await interaction.deferReply();

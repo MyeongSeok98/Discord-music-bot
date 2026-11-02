@@ -10,7 +10,7 @@ const {
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('loop')
-		.setDescription('🔁 반복 모드를 설정해요'),
+		.setDescription('🔁 반복 모드를 설정한다냐'),
 	async execute(interaction){
 
 		await interaction.deferReply();
@@ -33,7 +33,7 @@ module.exports = {
 
 async function loopMessage(interaction, server){
 	const selectmodeEmbed = new MessageEmbed()
-		.setTitle('반복 모드를 선택해주세요')
+		.setTitle('반복 모드를 선택해달라냐')
 		.setDescription(`현재 **${server.playInfo.loopmode[server.playInfo.loopcode]}**`)
 		.addFields({
 			name: '🔂 싱글 루프 모드',
@@ -97,9 +97,10 @@ async function loopMessage(interaction, server){
 		}
 	}
 	
-	await interaction.editReply({embeds: [selectmodeEmbed], components: [selecbuttons]});
+	const modeMessage = await interaction.editReply({embeds: [selectmodeEmbed], components: [selecbuttons]});
 	
-	const filter = i => i.user.id == interaction.member.id;
+	const filter = i => i.user.id == interaction.member.id && i.message?.id === modeMessage.id
+		&& ['single', 'queue', 'autoplay', 'off'].includes(i.customId);
 	const collector = interaction.channel.createMessageComponentCollector({filter, time: 300e3});
 
 	collector.on('collect', async button => {

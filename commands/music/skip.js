@@ -5,7 +5,7 @@ const { defaultMusicCommandScript } = require('../../script.json');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('skip')
-		.setDescription('⏭ 현재 재생 중인 노래를 스킵해요'),
+		.setDescription('⏭ 현재 재생 중인 노래를 스킵한다냐'),
 	async execute(interaction){
 
 		await interaction.deferReply();

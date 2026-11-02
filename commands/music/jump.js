@@ -5,11 +5,11 @@ const { defaultMusicCommandScript } = require('../../script.json');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('jump')
-		.setDescription('🛹 대기열의 특정 노래로 스킵해요')
+		.setDescription('🛹 대기열의 특정 노래로 스킵한다냐')
 		.addIntegerOption(option =>
 			option
 				.setName('goto')
-				.setDescription('스킵할 대기열의 번호를 입력해주세요')
+				.setDescription('스킵할 대기열의 번호를 입력해달라냐')
 				.setRequired(true)),
 	async execute(interaction){
 

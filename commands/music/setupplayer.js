@@ -22,7 +22,7 @@ require('dotenv').config();
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('setup')
-		.setDescription('⚙️ 이 서버의 음악 플레이어를 설정해요(관리자만 사용 가능)'),
+		.setDescription('⚙️ 이 서버의 음악 플레이어를 설정한다냐(관리자만 사용 가능)'),
 	async execute(interaction){
 		await interaction.deferReply();
 
@@ -74,11 +74,11 @@ module.exports = {
 				});
 				await GetserverData.save();
 
-				await interaction.editReply(`플레이어 채널 <#${createdChannel.id}>가 생성되었습니다.` 
-					+ '\n' + '/setup을 다시 쳐서 커스텀 설정을 할 수도 있습니다.');
+				await interaction.editReply(`플레이어 채널 <#${createdChannel.id}>가 생성되었다냐.` 
+					+ '\n' + '/setup을 다시 쳐서 커스텀 설정을 할 수도 있다냐.');
 
 			}catch(e){
-				await interaction.editReply("플레이어 채널을 생성하는데 오류가 발생했습니다.");
+				await interaction.editReply("플레이어 채널을 생성하는데 오류가 발생했다냐. 냐는 잘못한게 없다냐");
 				console.log(`player-generate error at ${interaction.guild.id}@${interaction.guild.name}`);
 				console.log(e);
 				return;
@@ -104,14 +104,14 @@ module.exports = {
 					);
 
 			let manuelEmbed = new MessageEmbed()
-				.setTitle('설정하고 싶은 것을 선택해주세요')
+				.setTitle('설정하고 싶은 것을 선택해달라냐')
 				.setDescription(
 						'**플레이어 텍스트 설정**' + '\n' +
-						'배너 위에 표시될 텍스트를 설정합니다.' + '\n\n' +
+						'배너 위에 표시될 텍스트를 설정한다냐.' + '\n\n' +
 						'**플레이어 배너 설정**' + '\n' +
-						'배너 이미지를 설정합니다.' + '\n\n' +
+						'배너 이미지를 설정한다냐.' + '\n\n' +
 						'**플레이어 대기 이미지 설정**' + '\n' +
-						'노래 재생 중이 아닐 때 플레이어에 표시할 사진을 설정합니다.' + '\n\n'
+						'노래 재생 중이 아닐 때 플레이어에 표시할 사진을 설정한다냐.' + '\n\n'
 				)
 				.setColor(process.env.DEFAULT_COLOR)
 
@@ -163,8 +163,8 @@ module.exports = {
 
 				switch(button.customId){
 					case 'editplayermessage':
-						manuelEmbed.setTitle("배너 위에 나올 텍스트를 500자 이내로 입력해주세요." )
-							.setDescription("줄은 쉬프트+엔터로 띄울 수 있습니다.\n\n기본값으로 설정하려면 default라고 입력해주세요.");
+						manuelEmbed.setTitle("배너 위에 나올 텍스트를 500자 이내로 입력달라냐." )
+							.setDescription("줄은 쉬프트+엔터로 띄울 수 있다냐.\n\n기본값으로 설정하려면 default라고 입력해달라냐.");
 						
 						const editMessageA = await interaction.editReply({
 							embeds: [manuelEmbed],
@@ -187,8 +187,8 @@ module.exports = {
 						break;
 
 					case 'editplayerbanner':
-						manuelEmbed.setTitle("배너 이미지를 업로드해주세요.")
-							.setDescription("용량이 너무 큰 파일은 시간이 오래 걸릴 수 있습니다.\n\n기본 이미지로 설정하려면 default라고 입력해주세요.");
+						manuelEmbed.setTitle("배너 이미지를 업로드하라냐.")
+							.setDescription("용량이 너무 큰 파일은 시간이 오래 걸릴 수 있다냐.\n\n기본 이미지로 설정하려면 default라고 입력하라냐.");
 						
 						const editMessageB = await interaction.editReply({
 							embeds: [manuelEmbed],
@@ -216,8 +216,8 @@ module.exports = {
 						break;
 
 					case 'editplayerembedimage':
-						manuelEmbed.setTitle("플레이어 이미지를 업로드해주세요.")
-							.setDescription("용량이 너무 큰 파일은 시간이 오래 걸릴 수 있습니다.\n\n기본 이미지로 설정하려면 default라고 입력해주세요.");
+						manuelEmbed.setTitle("플레이어 이미지를 업로드해달라냐.")
+							.setDescription("용량이 너무 큰 파일은 시간이 오래 걸릴 수 있다냐.\n\n기본 이미지로 설정하려면 default라고 입력해달라냐.");
 						
 						const editMessageC = await interaction.editReply({
 							embeds: [manuelEmbed],
@@ -253,15 +253,15 @@ module.exports = {
 				}
 
 				manuelEmbed = new MessageEmbed()
-					.setTitle('설정하고 싶은 것을 선택해주세요')
+					.setTitle('설정하고 싶은 것을 선택해달라냐')
 					.setDescription(
 						'✅ 저장 완료' + '\n\n' + 
 						'**플레이어 텍스트 설정**' + '\n' +
-						'배너 위에 표시될 텍스트를 설정합니다.' + '\n\n' +
+						'배너 위에 표시될 텍스트를 설정한다냐.' + '\n\n' +
 						'**플레이어 배너 설정**' + '\n' +
-						'배너 이미지를 설정합니다.' + '\n\n' +
+						'배너 이미지를 설정한다냐.' + '\n\n' +
 						'**플레이어 대기 이미지 설정**' + '\n' +
-						'노래 재생 중이 아닐 때 플레이어에 표시할 사진을 설정합니다.' + '\n\n'
+						'노래 재생 중이 아닐 때 플레이어에 표시할 사진을 설정한다냐.' + '\n\n'
 					)
 					.setColor(process.env.DEFAULT_COLOR);
 

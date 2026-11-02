@@ -16,7 +16,7 @@ const song = id => ({ title: id, url: `https://youtu.be/${id}`, duration: '00:05
 
 // Replace only external Discord/YouTube IO; execute the actual orchestration,
 // queue lifecycle, prefetch cache and connection readiness code together.
-function harness({ lookup = async text => song(text), open = async () => audio() } = {}) {
+function harness({ lookup = async text => song(text), open = async () => audio(), choose } = {}) {
   const players = [], calls = [], errors = [];
   const guild = { id: 'test', members: { me: { voice: { channel: null } } }, voiceAdapterCreator: {} };
   const server = new musicFunctions(guild);
@@ -29,7 +29,8 @@ function harness({ lookup = async text => song(text), open = async () => audio()
   };
   connection.destroy = () => connection.set('destroyed');
   connection.subscribe = player => ({ player });
-  const youtube = { stream: async (url, options) => { calls.push(url); return open(url, options); } };
+  const youtube = { parsePlaylistRequest: require('../musicdata/functions/youtube').parsePlaylistRequest,
+    stream: async (url, options) => { calls.push(url); return open(url, options); } };
   server.streamInfo.prefetch = new TrackPrefetch(youtube.stream);
   class Interaction {}
   const interaction = Object.assign(new Interaction(), {
@@ -58,13 +59,14 @@ function harness({ lookup = async text => song(text), open = async () => audio()
     },
     'discord.js': { Interaction },
     './pushqueue.js': {
-      resolveRequest: (i, text) => lookup(text),
+      resolveRequest: (i, text, options) => lookup(text, options),
       pushqueue: async (i, text, resolved) => { server.queue.push(resolved); server.queueChanged(); return { content: 'queued' }; }
     },
     './youtube.js': youtube,
     './updateplayer.js': { getPlayerEmbed: () => ({ content: 'player' }) },
     './search.js': { ytsearchGetInfo: async () => 5, ytRelatedGetInfo: async () => 5 }
   };
+  if (choose) dependencies['./mix-choice.js'] = { chooseMixRequest: choose };
   const filename = path.resolve('musicdata/functions/stream.js');
   const realRequire = createRequire(filename);
   const module = { exports: {} };
@@ -75,7 +77,7 @@ function harness({ lookup = async text => song(text), open = async () => audio()
     console: { log() {}, error: (...args) => errors.push(args) }
   }, { filename });
   return { server, connection, calls, players, errors, interaction,
-    play: text => module.exports.streamTrigger(interaction, text, 'command'),
+    play: (text, options, requestType = 'command') => module.exports.streamTrigger(interaction, text, requestType, options),
     cleanup: () => { if (connection.state.status === 'connecting') connection.set('ready'); server.enterstop(); }
   };
 }
@@ -211,4 +213,51 @@ test('another voice channel cannot enqueue during the first channel handshake', 
   h.connection.set('ready'); await first;
   assert.equal(h.server.queue.length, 1);
   assert.equal(h.server.queue[0].title, 'one');
+});
+
+test('explicit mix starts preparation immediately with ten songs and no choice prompt', async t => {
+  let count, lookupText;
+  const link = 'https://www.youtube.com/watch?v=IeyCdm9WwXM&list=RDIeyCdm9WwXM';
+  const h = harness({ choose: async () => { throw new Error('must not show choice'); }, lookup: async (text, options) => {
+    count = options.mixCount; lookupText = text; return song('selected');
+  } }); t.after(h.cleanup);
+  const task = h.play(link, { allowMix: true }); await tick();
+  assert.equal(count, 10);
+  assert.equal(lookupText, link);
+  h.connection.set('ready'); await task;
+  assert.equal(h.server.queue[0].title, 'selected');
+  assert.deepEqual(h.errors, []);
+});
+
+test('stop during explicit mix lookup still prevents late playback', async t => {
+  const lookup = deferred();
+  const link = 'https://www.youtube.com/watch?v=IeyCdm9WwXM&list=RDIeyCdm9WwXM';
+  const h = harness({ choose: async () => { throw new Error('must not show choice'); }, lookup: () => lookup.promise }); t.after(h.cleanup);
+  const task = h.play(link, { allowMix: true }); await tick(); await h.server.stop();
+  h.connection.set('ready'); lookup.resolve(song('selected')); await task;
+  assert.equal(h.server.queue.length, 0);
+  assert.equal(h.calls.length, 0);
+});
+
+test('ordinary playlist requests do not receive the mix count setting', async t => {
+  let options;
+  const h = harness({ lookup: async (text, received) => { options = received; return song('selected'); } }); t.after(h.cleanup);
+  const task = h.play('https://www.youtube.com/playlist?list=PL0BYnx8lSxXUlmQlhtwYT--1Kbql1OJA9');
+  await tick(); h.connection.set('ready'); await task;
+  assert.equal(options, undefined);
+});
+
+test('normal play and player-channel mix links resolve only the selected video without a prompt', async t => {
+  const link = 'https://www.youtube.com/watch?v=IeyCdm9WwXM&list=RDIeyCdm9WwXM&start_radio=1';
+  for (const type of ['command', 'player']) {
+    let lookupText;
+    const h = harness({
+      choose: async () => { throw new Error('normal play must not prompt'); },
+      lookup: async text => { lookupText = text; return song('selected'); }
+    }); t.after(h.cleanup);
+    const task = h.play(link, undefined, type); await tick(); h.connection.set('ready'); await task;
+    assert.equal(lookupText, 'https://www.youtube.com/watch?v=IeyCdm9WwXM');
+    assert.equal(h.server.queue.length, 1);
+    assert.deepEqual(h.errors, []);
+  }
 });

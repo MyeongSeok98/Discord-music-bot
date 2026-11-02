@@ -10,11 +10,11 @@ module.exports = {
 		.setDescription('음악 재생/노래 추가 명령어')
 		.addStringOption(option =>
 			option.setName('request')
-				.setDescription('재생할 노래 제목이나 링크를 적어주세요')
+				.setDescription('재생할 노래 제목이나 링크를 적어달라냐')
 				.setRequired(true))
 		.addBooleanOption(option =>
 			option.setName('playlistsearch')
-				.setDescription('플레이리스트만 검색할건지 선택해요')
+				.setDescription('플레이리스트만 검색할건지 선택해달라냐')
 				.setRequired(false)),
 	async execute(interaction){
 		await interaction.deferReply();
