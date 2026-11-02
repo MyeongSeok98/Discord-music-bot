@@ -56,6 +56,7 @@ module.exports = {
 		!rmrange2 ? 
 			server.queue.splice(rmrange1, 1) :
 			server.queue.splice(rmrange1, rmrange2 - rmrange1 + 1);
+		server.queueChanged();
 
 		return;
 	}

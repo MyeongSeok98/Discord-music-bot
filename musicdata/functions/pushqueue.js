@@ -50,7 +50,7 @@ const scsetReg = /^https?:\/\/(soundcloud\.com|snd\.sc)\/(.*)\/(sets)\/(.*)$/;
 
 
 //pushqueue는 기본적으로 음악 정보 수집에 성공하면 MessageEmbed를 return함.
-async function pushqueue(interaction, text){
+async function resolveRequest(interaction, text){
 	const server = serverInfoList.get(interaction.guild.id);
 	let res = (ytplReg1.test(text) || (ytplReg2.test(text) && !text.includes('index='))) ? 
 		await ytplGetInfo(text)
@@ -68,7 +68,12 @@ async function pushqueue(interaction, text){
 			await ytplsearchGetInfo(text) :
 			await ytsearchGetInfo(text, server.playInfo.searchFilter);
 	}
+	return res;
+}
 
+async function pushqueue(interaction, text, prepared){
+	const server = serverInfoList.get(interaction.guild.id);
+	const res = arguments.length >= 3 ? prepared : await resolveRequest(interaction, text);
 	if(typeof(res) === 'number' || !res) return res ?? 7; 
 	//error나면 errorcode가 그대로 return됨.
 
@@ -137,9 +142,11 @@ async function pushqueue(interaction, text){
 		}
 	}
 
+	server.queueChanged();
 	return resultMessage;
 }
 
 module.exports = {
-	pushqueue
+	pushqueue,
+	resolveRequest
 }

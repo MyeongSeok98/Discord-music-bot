@@ -8,6 +8,7 @@ module.exports = {
 		console.log(`${deletedGuild.name} removed bot.`);
 		serverPlayerData.deleteMany({guildId: deletedGuild.id});
 		serverData.deleteMany({guildId: deletedGuild.id});
+		serverInfoList.get(deletedGuild.id)?.refresh();
 		serverInfoList.delete(deletedGuild.id);
 	}
 }

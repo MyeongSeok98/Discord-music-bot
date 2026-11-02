@@ -74,3 +74,24 @@ test('successful finite audio ends normally after the downloader exits', async (
   for await (const chunk of stream) chunks.push(chunk);
   assert.equal(Buffer.concat(chunks).toString(), 'complete audio');
 });
+
+test('cancelling a pending audio download terminates its child process', async () => {
+  let child;
+  const youtube = createYoutube({ spawnProcess: () => {
+    child = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { windowsHide: true });
+    return child;
+  } });
+  const controller = new AbortController();
+  const pending = youtube.stream('https://youtu.be/aRiVUVNUhIs', { signal: controller.signal });
+  const rejected = assert.rejects(pending, { name: 'AbortError' });
+  controller.abort();
+  await rejected;
+  if (child.exitCode === null) await new Promise(resolve => child.once('close', resolve));
+  assert.equal(child.killed, true);
+});
+
+test('an already cancelled request does not start a downloader', async () => {
+  const controller = new AbortController(); controller.abort();
+  const youtube = createYoutube({ spawnProcess: () => { throw new Error('must not spawn'); } });
+  await assert.rejects(youtube.stream('https://youtu.be/aRiVUVNUhIs', { signal: controller.signal }), { name: 'AbortError' });
+});

@@ -56,7 +56,8 @@ function createYoutube({ extract = downloader, spawnProcess = spawn,
     return null;
   }
 
-  function stream(url) {
+  function stream(url, { signal, highWaterMark = 256 * 1024 } = {}) {
+    if (signal?.aborted) return Promise.reject(new DOMException('Audio preparation cancelled', 'AbortError'));
     return new Promise((resolve, reject) => {
       const child = spawnProcess(downloader.constants.YOUTUBE_DL_PATH, [
         ...downloader.args(baseFlags), '--quiet', '--no-progress',
@@ -64,7 +65,7 @@ function createYoutube({ extract = downloader, spawnProcess = spawn,
       ], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
       // stdout can reach EOF before the exit status is known. Hold our own
       // stream open so a failed partial download cannot look like a full song.
-      const audio = new PassThrough();
+      const audio = new PassThrough({ highWaterMark });
       let started = false;
       let stderr = '';
       const timer = setTimeout(() => {
@@ -79,6 +80,13 @@ function createYoutube({ extract = downloader, spawnProcess = spawn,
         }
         if (child.exitCode === null && !child.killed) child.kill();
       }
+      const abort = () => {
+        if (started) {
+          clearTimeout(timer);
+          audio.destroy();
+        } else fail(new DOMException('Audio preparation cancelled', 'AbortError'));
+      };
+      signal?.addEventListener('abort', abort, { once: true });
       child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-4000); });
       child.once('error', fail);
       audio.once('error', error => {
@@ -93,12 +101,15 @@ function createYoutube({ extract = downloader, spawnProcess = spawn,
         resolve({ stream: audio, type: StreamType.Arbitrary });
       });
       audio.once('close', () => {
+        signal?.removeEventListener('abort', abort);
         child.stdout.destroy();
         if (child.exitCode === null && !child.killed) child.kill();
       });
       child.stdout.pipe(audio, { end: false });
       child.once('close', code => {
         clearTimeout(timer);
+        signal?.removeEventListener('abort', abort);
+        if (signal?.aborted) return;
         if (child.killed && started) return;
         if (code !== 0 || !started) {
           fail(new Error(stderr.trim() || `YouTube downloader exited without audio (${code})`));
