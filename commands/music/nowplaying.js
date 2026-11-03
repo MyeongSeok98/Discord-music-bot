@@ -11,7 +11,7 @@ const { defaultMusicCommandScript } = require('../../script.json');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('np')
-		.setDescription('ℹ️ 현재 재생 중인 노래의 정보를 보여줘요'),
+		.setDescription('ℹ️ 현재 재생 중인 노래의 정보를 보여준다냐'),
 	async execute(interaction){
 		await interaction.deferReply();
 		

@@ -1,5 +1,5 @@
 const musiccommandFilterList = [
-	'play', 'eject', 'jump', 'loop', 'move', 'pause',
+	'play', 'mix', 'eject', 'jump', 'loop', 'move', 'pause',
 	'remove', 'shuffle', 'stop', 'volume', 'skip'
 ];
 

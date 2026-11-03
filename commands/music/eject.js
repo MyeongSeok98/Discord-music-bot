@@ -5,7 +5,7 @@ const { defaultMusicCommandScript } = require('../../script.json');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('eject')
-		.setDescription('⏏️ 음악 플레이어를 초기화하고 음성 채널을 나가요'),
+		.setDescription('⏏️ 음악 플레이어를 초기화하고 음성 채널을 나간다냐'),
 	async execute(interaction){
 
 		await interaction.deferReply();

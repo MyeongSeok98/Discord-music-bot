@@ -5,7 +5,7 @@ const { defaultMusicCommandScript } = require('../../script.json');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('pause')
-		.setDescription('⏸ 노래를 일시정지해요. 다시 입력하면 노래를 재개해요.'),
+		.setDescription('⏸ 노래를 일시정지한다냐. 다시 입력하면 노래를 재개한다냐.'),
 	async execute(interaction){
 
 		await interaction.deferReply();

@@ -155,6 +155,9 @@ async function syncPlayerChannel(guildId){
 	const messageCollector = playerChannel.createMessageCollector();
 
 	messageCollector.on('collect', async msg => {
+		// Interactive mix prompts own their timeout and cleanup; do not delete
+		// them with the channel's usual five-second bot-message cleanup.
+		if (msg.author?.bot && msg.components?.some(row => row.components.some(button => button.customId?.startsWith('mix:')))) return;
 		//필터
 		if(!msg.type == 'DEFAULT' || msg.member.user.bot){
 			setTimeout(() => msg.delete().catch(e => null), 5e3);
@@ -176,6 +179,7 @@ async function syncPlayerChannel(guildId){
 	const buttonCollector = playerChannel.createMessageComponentCollector();
 
 	buttonCollector.on('collect', async i => {
+		if (!i.isButton() || !defaultButtonComponents.some(row => row.components.some(button => button.customId === i.customId))) return;
 		if(!i.isButton() || !i.member.voice.channel || (server.queue.length == 0 && i.customId != 'stop'))
 			return i.update().catch(e => null);
 

@@ -5,16 +5,16 @@ const { defaultMusicCommandScript } = require('../../script.json');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('move')
-		.setDescription('↪️ 대기열에 있는 특정 노래의 위치를 옮겨요')
+		.setDescription('↪️ 대기열에 있는 특정 노래의 위치를 옮긴다냐')
 		.addIntegerOption(option =>
 			option
 				.setName('mvrange1')
-				.setDescription('옮길 노래를 선택해주세요')
+				.setDescription('옮길 노래를 선택해달라냐')
 				.setRequired(true))
 		.addIntegerOption(option =>
 			option
 				.setName('mvrange2')
-				.setDescription('옮길 위치를 선택해주세요')
+				.setDescription('옮길 위치를 선택해달라냐')
 				.setRequired(true)),
 	async execute(interaction){
 

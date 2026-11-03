@@ -16,7 +16,7 @@ require('dotenv').config();
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('setting')
-		.setDescription('⚙️ 이 서버의 음악봇 설정을 편집해요(관리자만 사용 가능)'),
+		.setDescription('⚙️ 이 서버의 음악봇 설정을 편집한다냐(관리자만 사용 가능)'),
 	async execute(interaction){
 		await interaction.deferReply();
 
@@ -66,7 +66,7 @@ module.exports = {
 
 		let preferenceEmbed = new MessageEmbed()
 			.setTitle('음악봇 설정')
-			.setDescription('설정하고 싶은 것을 선택해주세요')
+			.setDescription('설정하고 싶은 것을 선택해달라냐')
 			.setColor(process.env.DEFAULT_COLOR)
 			.addFields(
 				{
@@ -83,7 +83,7 @@ module.exports = {
 					name: '명령어 채널',
 					value: server.streamInfo.commandChannel == '0' ? 
 						'제한 없음' : 
-						`${server.streamInfo.commandChannel}\n이 채널 이외에는 음악 명령어를 쓸 수 없어요.`,
+						`${server.streamInfo.commandChannel}\n이 채널 이외에는 음악 명령어를 쓸 수 없다냐.`,
 					inline: false
 				}
 
@@ -151,7 +151,7 @@ module.exports = {
 			//얘네는 serverInfo에만 저장하기
 			switch(button.customId){
 				case 'editmaxduration':
-					preferenceEmbed.setTitle('검색할 때 영상 길이를 최대 몇 분으로 할건지 적어주세요');
+					preferenceEmbed.setTitle('검색할 때 영상 길이를 최대 몇 분으로 할건지 적어달라냐');
 					const editMessageA = await interaction.editReply({
 						embeds: [preferenceEmbed],
 						components: [preferenceButtons]
@@ -164,9 +164,9 @@ module.exports = {
 
 				case 'editblockedkeywords':
 					preferenceEmbed
-						.setTitle('추가/삭제할 차단 키워드를 입력해주세요')
-						.setDescription(`새로운 단어를 입력하면 추가, 이미 저장된 단어를 입력하면 삭제할 수 있어요
-										추가할 단어는 공백 없이 최대 10글자까지 추가 가능해요`);
+						.setTitle('추가/삭제할 차단 키워드를 입력해달라냐')
+						.setDescription(`새로운 단어를 입력하면 추가, 이미 저장된 단어를 입력하면 삭제할 수 있다냐
+										추가할 단어는 공백 없이 최대 10글자까지 추가 가능하다냐`);
 
 				const editMessageB = await interaction.editReply({
 						embeds: [preferenceEmbed],
@@ -201,10 +201,10 @@ module.exports = {
 
 				case 'editcommandchannel':
 					preferenceEmbed
-						.setTitle('명령어를 쓰게 할 채널을 선택해주세요.')
-						.setDescription(`설정하고 나면 봇 사용자들은 그 채널 말고는 음악 명령어를 쓸 수 없어요.\n
-										채팅창에 #를 입력하면 선택할 수 있는 채널이 떠요. 그 중 하나를 선택해주세요.
-										0000이라 입력하면 아무 채널에서나 명령어를 쓸 수 있게 할 수 있어요.`);
+						.setTitle('명령어를 쓰게 할 채널을 선택해달라냐.')
+						.setDescription(`설정하고 나면 봇 사용자들은 그 채널 말고는 음악 명령어를 쓸 수 없다냐.\n
+										채팅창에 #를 입력하면 선택할 수 있는 채널이 떠요. 그 중 하나를 선택해달라냐.
+										0000이라 입력하면 아무 채널에서나 명령어를 쓸 수 있게 할 수 있다냐.`);
 
 					const editMessageC = await interaction.editReply({
 						embeds: [preferenceEmbed],
@@ -252,7 +252,7 @@ module.exports = {
 
 			//편집한걸로 임베드 설정하기
 			preferenceEmbed = new MessageEmbed()
-				.setTitle('설정하고 싶은 것을 선택해주세요')
+				.setTitle('설정하고 싶은 것을 선택해준다냐')
 				.setDescription('✅ 저장 완료')
 				.setColor(process.env.DEFAULT_COLOR)
 				.addFields(
@@ -271,7 +271,7 @@ module.exports = {
 						name: '명령어 채널',
 						value: server.streamInfo.commandChannel == '0' ? 
 							'제한 없음' : 
-							`${server.streamInfo.commandChannel}\n이 채널 이외에는 음악 명령어를 쓸 수 없어요.`,
+							`${server.streamInfo.commandChannel}\n이 채널 이외에는 음악 명령어를 쓸 수 없다냐.`,
 						inline: false
 					}
 				);
